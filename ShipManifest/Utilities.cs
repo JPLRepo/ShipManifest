@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using ShipManifest.APIClients;
 using ShipManifest.InternalObjects;
 using ShipManifest.Windows;
@@ -122,6 +123,13 @@ namespace ShipManifest
     {
       try
       {
+        // Handle Ksp Logging
+        if (SMSettings.KspLogDebug)
+        {
+          if ((SMSettings.KspLogVerbose && verbose) || type == LogType.Error)
+            Debug.Log(string.Format("[ShipManifest] - {0}:  {1}", type, msg));
+        }
+
         // Added rolling error list. This limits growth.  Configure with ErrorListLength
         if (_logItemList.Count > int.Parse(SMSettings.ErrorLogLength) && int.Parse(SMSettings.ErrorLogLength) > 0)
           _logItemList.RemoveRange(0, _logItemList.Count - int.Parse(SMSettings.ErrorLogLength));
@@ -171,6 +179,21 @@ namespace ShipManifest
     {
       Info,
       Error
+    }
+
+    internal static object GetObjectField(object o, string fieldName)
+    {
+      object outputObj = new object();
+      bool foundObj = false;
+      foreach (FieldInfo field in o.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public))
+      {
+        if (field.IsStatic) continue;
+        if (field.Name != fieldName) continue;
+        foundObj = true;
+        outputObj = field.GetValue(o);
+        break;
+      }
+      return foundObj ? outputObj : null;
     }
   }
 }

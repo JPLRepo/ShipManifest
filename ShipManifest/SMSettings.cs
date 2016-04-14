@@ -100,6 +100,8 @@ namespace ShipManifest
     internal static bool VerboseLogging;
     internal static bool AutoDebug;
     internal static bool SaveLogOnExit;
+    internal static bool KspLogDebug;
+    internal static bool KspLogVerbose;
     internal static string ErrorLogLength = "1000";
     internal static bool EnableKerbalRename;
     internal static bool RenameWithProfession;
@@ -130,6 +132,8 @@ namespace ShipManifest
     internal static bool PrevAutoSave;
     internal static bool PrevUseUnityStyle = true;
     internal static int PrevSaveIntervalSec = 60;
+    internal static bool PrevKspLogDebug;
+    internal static bool PrevKspLogVerbose;
 
     internal static bool PrevRealismMode;
     internal static bool PrevLockSettings;
@@ -366,6 +370,8 @@ namespace ShipManifest
           : SaveIntervalSec;
         AutoDebug = settingsNode.HasValue("AutoDebug") ? bool.Parse(settingsNode.GetValue("AutoDebug")) : AutoDebug;
         DebugLogPath = settingsNode.HasValue("DebugLogPath") ? settingsNode.GetValue("DebugLogPath") : DebugLogPath;
+        KspLogDebug = settingsNode.HasValue("KspLogDebug") ? bool.Parse(settingsNode.GetValue("KspLogDebug")) : AutoDebug;
+        KspLogVerbose = settingsNode.HasValue("KspLogVerbose") ? bool.Parse(settingsNode.GetValue("KspLogVerbose")) : AutoDebug;
         ErrorLogLength = settingsNode.HasValue("ErrorLogLength")
           ? settingsNode.GetValue("ErrorLogLength")
           : ErrorLogLength;
@@ -502,6 +508,8 @@ namespace ShipManifest
         WriteValue(settingsNode, "SaveIntervalSec", SaveIntervalSec);
         WriteValue(settingsNode, "AutoDebug", AutoDebug);
         WriteValue(settingsNode, "DebugLogPath", DebugLogPath);
+        WriteValue(settingsNode, "KspLogDebug", KspLogDebug);
+        WriteValue(settingsNode, "KspLogVerbose", KspLogVerbose);
         WriteValue(settingsNode, "ErrorLogLength", ErrorLogLength);
         WriteValue(settingsNode, "SaveLogOnExit", SaveLogOnExit);
         WriteValue(settingsNode, "EnableKerbalRename", EnableKerbalRename);
@@ -634,6 +642,8 @@ namespace ShipManifest
       PrevModsToolTips = TabInstalledMods.ShowToolTips;
 
       //debugger Settings
+      PrevKspLogDebug = KspLogDebug;
+      PrevKspLogVerbose = KspLogVerbose;
       PrevErrorLogLength = ErrorLogLength;
     }
 
@@ -692,6 +702,8 @@ namespace ShipManifest
       TabInstalledMods.ShowToolTips = PrevModsToolTips;
 
       //debugger Settings
+      KspLogDebug = PrevKspLogDebug;
+      KspLogVerbose = PrevKspLogVerbose;
       PrevErrorLogLength = ErrorLogLength;
     }
 

@@ -8,10 +8,11 @@ using ShipManifest.InternalObjects;
 using ShipManifest.Process;
 using ShipManifest.Windows;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace ShipManifest
 {
-  [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+  [KSPAddon(KSPAddon.Startup.SpaceCentre | KSPAddon.Startup.Flight, false)]
   // ReSharper disable once InconsistentNaming
   public class SMAddon : MonoBehaviour
   {
@@ -29,7 +30,7 @@ namespace ShipManifest
     internal static ICLSAddon ClsAddon;
 
     internal static string TextureFolder = "ShipManifest/Textures/";
-    internal static string SaveMessage = string.Empty;
+    internal static string SaveMessage = String.Empty;
 
     [KSPField(isPersistant = true)] internal static double Elapsed;
 
@@ -401,6 +402,9 @@ namespace ShipManifest
       if (SmVessel.TransferCrewObj.CrewXferActive)
       {
         // Remove the transfer message that stock displayed. 
+        DeleteScreenMessages(action.host.name, "UC");
+
+        // Write new message to replace.
         var failMessage =
           string.Format("<color=orange>{0} is unable to xfer to {1}.  An SM Crew Xfer is in progress</color>",
             action.host.name, action.to.partInfo.title);
@@ -414,7 +418,7 @@ namespace ShipManifest
           if (new DFWrapper.DeepFreezer(action.to.Modules["DeepFreezer"]).FreezerSpace == 0) return;
 
         // If we are here, then we want to override the Stock Xfer...
-        RemoveScreenMsg();
+        DeleteScreenMessages(action.host.name, "UC");
 
         // store data from event.
         SmVessel.TransferCrewObj.FromPart = action.from;
@@ -988,40 +992,60 @@ namespace ShipManifest
       GameEvents.onVesselChange.Fire(SmVessel.Vessel);
     }
 
-    internal static void DisplayScreenMsg(string strMessage)
+    /// <summary>
+    ///Will delete Screen Messages. If you pass in messagetext it will only delete messages that contain that text string.
+    ///If you pass in a messagearea it will only delete messages in that area. Values are: UC,UL,UR,LC,ALL
+    /// </summary>
+    /// <param name="messagetext">Specify a string that is part of a message that you want to remove, or pass in empty string to delete all messages</param>
+    /// <param name="messagearea">Specify a string representing the message area of the screen that you want messages removed from, 
+    /// or pass in "ALL" string to delete from all message areas. 
+    /// messagearea accepts the values of "UC" - UpperCenter, "UL" - UpperLeft, "UR" - UpperRight, "LC" - LowerCenter, "ALL" - All Message Areas</param>
+    internal static void DeleteScreenMessages(string messagetext, string messagearea)
     {
-      // TODO:  Still searching for a solution to removed existing screenMessages.
-      //var smessage = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
-      //var smessages = ScreenMessages.Instance;
-      //if (smessages != null)
-      //{
-      //  var smessagesToRemove =
-      //    smessages.activeMessages.Where(
-      //      x =>
-      //        Math.Abs(x.startTime - smessage.startTime) < SMSettings.Tolerance &&
-      //        x.style == ScreenMessageStyle.LOWER_CENTER).ToList();
-      //  foreach (var m in smessagesToRemove)
-      //    ScreenMessages.RemoveMessage(m);
-      //}
-      var failmessage = new ScreenMessage(strMessage, 15f, ScreenMessageStyle.UPPER_CENTER);
-      ScreenMessages.PostScreenMessage(failmessage);
+      //Get the ScreenMessages Instance
+      var messages = ScreenMessages.Instance;
+      List<ScreenMessagesText> messagetexts = new List<ScreenMessagesText>();
+      //Get the message Area messages based on the value of messagearea parameter.
+      switch (messagearea)
+      {
+        case "UC":
+          messagetexts = messages.upperCenter.gameObject.GetComponentsInChildren<ScreenMessagesText>().ToList();
+          break;
+        case "UL":
+          messagetexts = messages.upperLeft.gameObject.GetComponentsInChildren<ScreenMessagesText>().ToList();
+          break;
+        case "UR":
+          messagetexts = messages.upperRight.gameObject.GetComponentsInChildren<ScreenMessagesText>().ToList();
+          break;
+        case "LC":
+          messagetexts = messages.lowerCenter.gameObject.GetComponentsInChildren<ScreenMessagesText>().ToList();
+          break;
+        case "ALL":
+          messagetexts = messages.gameObject.GetComponentsInChildren<ScreenMessagesText>().ToList();
+          break;
+      }
+      //Loop through all the mesages we found.
+      foreach (var msgtext in messagetexts)
+      {
+        //If the user specified text to search for only delete messages that contain that text.
+        if (messagetext != "")
+        {
+          if (msgtext != null && msgtext.text.text.Contains(messagetext))
+          {
+            UnityEngine.Object.Destroy(msgtext.gameObject);
+          }
+        }
+        else  //If the user did not specific a message text to search for we DELETE ALL messages!!
+        {
+          UnityEngine.Object.Destroy(msgtext.gameObject);
+        }
+      }
     }
 
-    internal static void RemoveScreenMsg()
+    internal static void DisplayScreenMsg(string strMessage)
     {
-      var smessage = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
-      var smessages = FindObjectOfType<ScreenMessages>();
-      // TODO:  Still searching for a solution to located existing messages.
-      //if (smessages != null)
-      //{
-      //  var smessagesToRemove =
-      //    smessages.activeMessages.Where(
-      //      x =>
-      //        Math.Abs(x.startTime - smessage.startTime) < SMSettings.Tolerance &&
-      //        x.style == ScreenMessageStyle.LOWER_CENTER).ToList();
-      //  foreach (var m in smessagesToRemove)
-      //    ScreenMessages.RemoveMessage(m);
-      //}
+      var failmessage = new ScreenMessage(strMessage, 15f, ScreenMessageStyle.UPPER_CENTER);
+      ScreenMessages.PostScreenMessage(failmessage);
     }
 
     // This method is used for autosave...
